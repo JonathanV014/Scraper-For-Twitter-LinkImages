@@ -17,7 +17,7 @@ class TwitterScrapper():
         self.PASSWORD = password
 
         self.DIR = self.DIRSAVECSV+self.NAMECSV
-        self.IMAGESCLASS = imagesClass = "css-9pa8cd"
+        self.IMAGESCLASS = "css-9pa8cd"
         self.ITERA = 0
 
         self.DATES = self.generateDates()
