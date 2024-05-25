@@ -1,165 +1,151 @@
-import os
 import csv
 import time
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from datetime import datetime, timedelta
 
-load_dotenv()
-
 class TwitterScrapper():
-    def __init__(self, STARTDATE, ENDDATE, SCROLLTIME, ):
-        STARTDATE = datetime(2023,5,8) #Replace for your limits
-    ENDDATE = datetime(2023,12,31)
+    def __init__(self, startDate, endDate, scrollTime, distance, dirSaveCsv, nameCsv, searchEquation, user, password):
 
-    SCROLLTIME = 500 #Seconds
-    DISTANCE = 250 #Pixels
+        self.STARTDATE = startDate
+        self.ENDDATE = endDate
+        self.SCROLLTIME = scrollTime
+        self.DISTANCE = distance    
+        self.DIRSAVECSV = dirSaveCsv
+        self.NAMECSV = nameCsv
+        self.SEARCHEQUATION = searchEquation 
+        self.USER = user
+        self.PASSWORD = password
 
-    DIRSAVECSV = "imgs/"
-    NAMECSV = "urlImagenesAccidentes.csv"
+        self.DIR = self.DIRSAVECSV+self.NAMECSV
+        self.IMAGESCLASS = imagesClass = "css-9pa8cd"
+        self.ITERA = 0
 
-    #Replace for you search equation
-    SEARCHEQUATION = "((accidente or siniestro or colision or choque) and (transito or vehicular or automovilistico)))"
-
-
-    #Read from your .env twitter username and password 
-    USER = os.getenv('USER')
-    PASSWORD = os.getenv('PASSWORD')
-
-
-USER = os.getenv('USER')
-PASSWORD = os.getenv('PASSWORD')
-SCROLLTIME = 500
-DISTANCE = 250
-imagesl = set()
-imagesLT = set()
-imagesClass = "css-9pa8cd"
-imgPreToCsv = []
-itera = 0
-
-
-##LLEGUÉ HASTA 2023-05-07
-startDate = datetime(2023,5,8)
-endDate = datetime(2023,12,31)
-
-dates = []
-fechaI = startDate
-while fechaI <= endDate:
-    dates.append(fechaI.strftime("%Y-%m-%d"))
-    fechaI += timedelta(days=1)
-
-
-#years = [2024]
-#months = [31, 28, 31, 30, 22, 0, 0, 0, 0, 0, 0, 0 ] #30, 31, 31, 30, 31, 30, 31 
-print( os.path.exists('imgs/imagenesAcidentes.csv'))
-
-def saveCSV():
-    global itera
-    for url in imagesl:
-        img = {"#": itera, "URL": url}
-        itera = itera + 1
-        imgPreToCsv.append(img)
+        self.DATES = self.generateDates()
+        self.IMAGESL = set()
+        self.IMAGESLT = set()
+        self.IMGPRETOCSV = []
         
-    with open('imgs/imagenesAcidentes.csv', 'w', newline='') as f:
-        write = csv.DictWriter(f, fieldnames=['#', "URL"])
-        write.writeheader()
-        write.writerows(imgPreToCsv)
-        
-        
-    print("Guardado exitosamente")
-
-def extractImagesForDay(page):
-    start = datetime.now()
-    end = False
-    while not end:
-        extractImageUrls(page, imagesClass)
-        end = page.evaluate("""() => {
-            const scrollHeight = document.documentElement.scrollHeight;
-            const scrollTop = window.pageYOffset;
-            return (scrollTop + window.innerHeight) >= scrollHeight;
-        }""")
-        if not end:
-            page.evaluate(f"""async () => {{
-                await new Promise(resolve => {{
-                    const scrollHeight = document.documentElement.scrollHeight;
-                    const distance = {DISTANCE}; 
-                    const delay = {SCROLLTIME}; 
-                    let scrollTop = window.pageYOffset;
-                    const scrollStep = () => {{
-                        scrollTop += distance;
-                        if (scrollTop >= scrollHeight) {{
-                            resolve();
-                            return;
-                        }}
-                        window.scrollTo(0, scrollTop);
-                        setTimeout(scrollStep, delay);
-                    }};
-                    scrollStep();
-                }});
-            }}""")
-    showLinks()
-    end = datetime.now()
-    print("---------------------------------------------")
-    print("Total URLS extraidas en la fecha: ", len(imagesl))
-    diference = -1
-    if start > end:
-        diference =  start - end
-    else:
-        diference = end - start
-    print("Tomó: ", diference, " en terminar")
-
+    def generateDates(self) -> list:
+        dates = []
+        fechaI = self.STARTDATE
+        while fechaI <= self.ENDDATE:
+            dates.append(fechaI.strftime("%Y-%m-%d"))
+            fechaI += timedelta(days=1)
+        return dates
     
+    def generateUrlEquation(self, equation):
+        equation = equation.replace(" ", "%20")
+        equation = equation.replace("since:", "since%3A")
+        equation = equation.replace("until:", "until%3A")
+        url = f"https://x.com/search?q={equation}&src=spelling_expansion_revert_click"
+        return url
+
+
+    def saveCSV(self):
+        for url in self.IMAGESL:
+            img = {"#": self.ITERA, "URL": url}
+            self.ITERA = self.ITERA + 1
+            self.IMGPRETOCSV.append(img)
+            
+        with open(self.DIR, 'w', newline='') as f:
+            write = csv.DictWriter(f, fieldnames=['#', "URL"])
+            write.writeheader()
+            write.writerows(self.IMGPRETOCSV)
+
+        print("Guardado exitosamente")
+
+    def extractImagesForDay(self, page):
+        start = datetime.now()
+        end = False
+        while not end:
+            self.extractImageUrls(page, self.IMAGESCLASS)
+            end = page.evaluate("""() => {
+                const scrollHeight = document.documentElement.scrollHeight;
+                const scrollTop = window.pageYOffset;
+                return (scrollTop + window.innerHeight) >= scrollHeight;
+            }""")
+            if not end:
+                page.evaluate(f"""async () => {{
+                    await new Promise(resolve => {{
+                        const scrollHeight = document.documentElement.scrollHeight;
+                        const distance = {self.DISTANCE}; 
+                        const delay = {self.SCROLLTIME}; 
+                        let scrollTop = window.pageYOffset;
+                        const scrollStep = () => {{
+                            scrollTop += distance;
+                            if (scrollTop >= scrollHeight) {{
+                                resolve();
+                                return;
+                            }}
+                            window.scrollTo(0, scrollTop);
+                            setTimeout(scrollStep, delay);
+                        }};
+                        scrollStep();
+                    }});
+                }}""")
+        self.showLinks()
+        end = datetime.now()
+        print("---------------------------------------------")
+        print("Total URLS extraidas en la fecha: ", len(self.IMAGESL))
+        diference = -1
+        if start > end:
+            diference =  start - end
+        else:
+            diference = end - start
+        print("Tomó: ", diference, " en terminar")
+
+    def extractImageUrls(self, page, cn):
+        images = page.query_selector_all(f'img.{cn}')
+        for img in images:
+            link = img.get_attribute('src')
+            if "profile_images" not in link and link not in self.IMAGESLT:
+                self.IMAGESL.add(link)
+                self.IMAGESLT.add(link)
+
+    def generateForDate(self, dtStart, dtEnd, page):
+        print("\n---------------------------------------------")
+        print("Fecha: ", dtStart, dtEnd, '\n')
+
+        equation = self.SEARCHEQUATION 
+        equation = f"{self.SEARCHEQUATION} since:{dtStart} until:{dtEnd}"
+        url = self.generateUrlEquation(equation)
+
+        page.goto(url)
+        time.sleep(7)
+
+        self.extractImagesForDay(page)
+        self.saveCSV()
+        self.IMAGESL.clear()
     
-    
+    def showLinks(self):
+        for link in self.IMAGESL:
+            print(link)
 
-def extractImageUrls(page, cn):
-    images = page.query_selector_all(f'img.{cn}')
-    for img in images:
-        link = img.get_attribute('src')
-        if "profile_images" not in link and link not in imagesLT:
-            imagesl.add(link)
-            imagesLT.add(link)
+    def startScrapper(self):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=False, slow_mo=50)
+            page = browser.new_page()
+            page.goto('https://x.com/i/flow/login')
+            
+            page.wait_for_selector('//*[contains(concat( " ", @class, " " ), concat( " ", "r-fdjqy7", " " ))]')
+            page.fill('//*[contains(concat( " ", @class, " " ), concat( " ", "r-fdjqy7", " " ))]', self.USER)
 
-def generateForDate(dtStart, dtEnd, page):
-    print("\n---------------------------------------------")
-    print("Fecha: ", dtStart, dtEnd, '\n')
-    page.goto(f"https://x.com/search?q=((accidente%20or%20siniestro%20or%20colision%20or%20choque)%20and%20(transito%20or%20vehicular%20or%20automovilistico)))%20since%3A{dtStart}%20until%3A{dtEnd}&src=spelling_expansion_revert_click")
-    time.sleep(5)
-    extractImagesForDay(page)
-    saveCSV()
-    imagesl.clear()
-    
-def showLinks():
-    for link in imagesl:
-        print(link)
+            page.click('//button[div/span/span[contains(text(), "Siguiente")]]')
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False, slow_mo=50)
-    page = browser.new_page()
-    page.goto('https://x.com/i/flow/login')
-    
-    page.wait_for_selector('//*[contains(concat( " ", @class, " " ), concat( " ", "r-fdjqy7", " " ))]')
-    page.fill('//*[contains(concat( " ", @class, " " ), concat( " ", "r-fdjqy7", " " ))]', USER)
+            page.wait_for_selector('input[name="password"]')
+            page.fill('input[name="password"]', self.PASSWORD)
 
+            page.click('//button[div/span/span[contains(text(), "Iniciar sesión")]]')
+            time.sleep(7)
 
-    page.click('//button[div/span/span[contains(text(), "Siguiente")]]')
-    
-    
-
-    page.wait_for_selector('input[name="password"]')
-    page.fill('input[name="password"]', PASSWORD)
-
-
-    page.click('//button[div/span/span[contains(text(), "Iniciar sesión")]]')
-    time.sleep(6)
-
-    for j in range(1,len(dates)):
-        i = j-1
-        generateForDate(dates[i], dates[j], page)
-    print("\n---------------------------------------------")
-    print("Total de URLS extraidas: ", len(imagesLT))
-    input("Soy la recontra verga-Terminado")
-    page.close()
+            for j in range(1,len(self.DATES)):
+                i = j-1
+                self.generateForDate(self.DATES[i], self.DATES[j], page)
+            print("\n---------------------------------------------")
+            print("Total de URLS extraidas: ", len(self.IMAGESLT))
+            input("PROCESO TERMINADO")
+            page.close()
     
 
     
