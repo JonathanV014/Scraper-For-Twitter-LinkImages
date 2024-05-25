@@ -7,6 +7,28 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 
+class TwitterScrapper():
+    def __init__(self, startDate, endDate, scrollTime, distance, dirSaveCsv, nameCsv, searchEquation, user, password):
+
+        self.STARTDATE = startDate
+        self.ENDDATE = endDate
+        self.SCROLLTIME = scrollTime
+        self.DISTANCE = distance    
+        self.DIRSAVECSV = dirSaveCsv
+        self.NAMECSV = nameCsv
+        self.SEARCHEQUATION = searchEquation 
+        self.USER = user
+        self.PASSWORD = password
+
+        self.DIR = self.DIRSAVECSV+self.NAMECSV
+        self.IMAGESCLASS = imagesClass = "css-9pa8cd"
+        self.ITERA = 0
+
+        self.DATES = self.generateDates()
+        self.IMAGESL = set()
+        self.IMAGESLT = set()
+        self.IMGPRETOCSV = []
+
 USER = os.getenv('USER')
 PASSWORD = os.getenv('PASSWORD')
 SCROLLTIME = 700
