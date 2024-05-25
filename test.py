@@ -1,6 +1,5 @@
 import csv
 import time
-from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from datetime import datetime, timedelta
 
