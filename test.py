@@ -1,34 +1,63 @@
 import os
+import csv
 import time
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
+from datetime import datetime, timedelta
 
 load_dotenv()
 
 USER = os.getenv('USER')
 PASSWORD = os.getenv('PASSWORD')
-SCROLLTIME = 500
+SCROLLTIME = 700
 DISTANCE = 250
 imagesl = set()
+imagesLT = set()
 imagesClass = "css-9pa8cd"
+imgPreToCsv = []
+itera = 0
 
 
-years = [2024]
-months = [31, 28, 31, 30, 22, 0, 0, 0, 0, 0, 0, 0 ] #30, 31, 31, 30, 31, 30, 31 
+##LLEGUÉ HASTA 2023-05-07
+startDate = datetime(2023,8,22)
+endDate = datetime(2023,12,31)
+
+dates = []
+fechaI = startDate
+while fechaI <= endDate:
+    dates.append(fechaI.strftime("%Y-%m-%d"))
+    fechaI += timedelta(days=1)
+
+
+#years = [2024]
+#months = [31, 28, 31, 30, 22, 0, 0, 0, 0, 0, 0, 0 ] #30, 31, 31, 30, 31, 30, 31 
+print( os.path.exists('imgs/imagenesAcidentes.csv'))
+
+def saveCSV():
+    global itera
+    for url in imagesl:
+        img = {"#": itera, "URL": url}
+        itera = itera + 1
+        imgPreToCsv.append(img)
+        
+    with open('imgs/imagenesAcidentes.csv', 'w', newline='') as f:
+        write = csv.DictWriter(f, fieldnames=['#', "URL"])
+        write.writeheader()
+        write.writerows(imgPreToCsv)
+        
+        
+    print("Guardado exitosamente")
 
 def extractImagesForDay(page):
+    start = datetime.now()
     end = False
     while not end:
         extractImageUrls(page, imagesClass)
-        print(len(imagesl))
-        showLinks()
         end = page.evaluate("""() => {
             const scrollHeight = document.documentElement.scrollHeight;
             const scrollTop = window.pageYOffset;
             return (scrollTop + window.innerHeight) >= scrollHeight;
         }""")
-
-        
         if not end:
             page.evaluate(f"""async () => {{
                 await new Promise(resolve => {{
@@ -48,16 +77,38 @@ def extractImagesForDay(page):
                     scrollStep();
                 }});
             }}""")
-    input("Somos la recontra verga")
+    showLinks()
+    end = datetime.now()
+    print("---------------------------------------------")
+    print("Total URLS extraidas en la fecha: ", len(imagesl))
+    diference = -1
+    if start > end:
+        diference =  start - end
+    else:
+        diference = end - start
+    print("Tomó: ", diference, " en terminar")
+
+    
+    
     
 
 def extractImageUrls(page, cn):
     images = page.query_selector_all(f'img.{cn}')
     for img in images:
         link = img.get_attribute('src')
-        if "profile_images" not in link:
+        if "profile_images" not in link and link not in imagesLT:
             imagesl.add(link)
+            imagesLT.add(link)
 
+def generateForDate(dtStart, dtEnd, page):
+    print("\n---------------------------------------------")
+    print("Fecha: ", dtStart, dtEnd, '\n')
+    page.goto(f"https://x.com/search?q=((accidente%20or%20siniestro%20or%20colision%20or%20choque)%20and%20(transito%20or%20vehicular%20or%20automovilistico)))%20since%3A{dtStart}%20until%3A{dtEnd}&src=spelling_expansion_revert_click")
+    time.sleep(5)
+    extractImagesForDay(page)
+    saveCSV()
+    imagesl.clear()
+    
 def showLinks():
     for link in imagesl:
         print(link)
@@ -80,16 +131,20 @@ with sync_playwright() as p:
 
 
     page.click('//button[div/span/span[contains(text(), "Iniciar sesión")]]')
-    time.sleep(12)
+    time.sleep(6)
 
+    for j in range(1,len(dates)):
+        i = j-1
+        generateForDate(dates[i], dates[j], page)
+    print("\n---------------------------------------------")
+    print("Total de URLS extraidas: ", len(imagesLT))
+    input("Soy la recontra verga-Terminado")
+    page.close()
+    
 
-
-    date = ["2024-01-01","2024-01-02"]
-    page.goto(f"https://x.com/search?q=((accidente%20or%20siniestro%20or%20colision%20or%20choque)%20and%20(transito%20or%20vehicular%20or%20automovilistico)))%20since%3A{date[0]}%20until%3A{date[1]}&src=spelling_expansion_revert_click")
-    print(date[0], date[1])
-    time.sleep(5)
-
-    extractImagesForDay(page)
+    
+   
+    
 
     
     
