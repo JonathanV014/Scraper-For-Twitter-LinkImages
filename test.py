@@ -1,5 +1,7 @@
 import csv
+import os.path
 import time
+import os
 from playwright.sync_api import sync_playwright
 from datetime import datetime, timedelta
 
@@ -16,7 +18,7 @@ class TwitterScrapper():
         self.USER = user
         self.PASSWORD = password
 
-        self.DIR = self.DIRSAVECSV+self.NAMECSV
+        self.DIR = os.path.join(self.DIRSAVECSV,self.NAMECSV)
         self.IMAGESCLASS = "css-9pa8cd"
         self.ITERA = 0
 

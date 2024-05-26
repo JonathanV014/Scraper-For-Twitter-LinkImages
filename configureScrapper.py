@@ -12,7 +12,7 @@ SCROLLTIME = 600 #Seconds
 DISTANCE = 250 #Pixels
 
 #where you are going to save your csv
-DIRSAVECSV = "imgs/"
+DIRSAVECSV = os.getcwd()
 NAMECSV = "urlImagenesAccidentes.csv"
 
 #Replace for you search equation
