@@ -48,7 +48,7 @@ How often (in seconds) to move and how much (pixels) to move:
 
 `SCROLLTIME` `DISTANCE`
 
-Directorio donde va a guardar el .csv con las URL de las imagenes extraidad y el nombre del archivo:
+Directory where you will save the .csv with the URLs of the extracted images and the file name:
 
 `DIRSAVECSV` `NAMECSV`
 
