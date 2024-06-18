@@ -1,6 +1,7 @@
 import csv
+import os.path
 import time
-from dotenv import load_dotenv
+import os
 from playwright.sync_api import sync_playwright
 from datetime import datetime, timedelta
 
@@ -17,8 +18,8 @@ class TwitterScrapper():
         self.USER = user
         self.PASSWORD = password
 
-        self.DIR = self.DIRSAVECSV+self.NAMECSV
-        self.IMAGESCLASS = imagesClass = "css-9pa8cd"
+        self.DIR = os.path.join(self.DIRSAVECSV,self.NAMECSV)
+        self.IMAGESCLASS = "css-9pa8cd"
         self.ITERA = 0
 
         self.DATES = self.generateDates()
@@ -146,20 +147,3 @@ class TwitterScrapper():
             print("Total de URLS extraidas: ", len(self.IMAGESLT))
             input("PROCESO TERMINADO")
             page.close()
-    
-
-    
-   
-    
-
-    
-    
-            
-
-    
-    
-    
-
-    
-
-    

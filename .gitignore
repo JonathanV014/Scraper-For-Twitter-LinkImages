@@ -2,4 +2,5 @@ imgs
 Pipfile
 Pipfile.lock
 .env
+logs.txt
 __pycache__
